@@ -1,0 +1,70 @@
+name: Arduino Lint
+
+on: # プッシュ時、プルリクエスト時に実行
+  push:
+    paths-ignore:
+      - "**.md" # マークダウンファイルの変更は無視
+  pull_request:
+    paths-ignore:
+      - "**.md"
+
+concurrency: # 連続プッシュされた場合、前回の実行を止める
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ArduinoLint:
+    name: ${{ matrix.board.fqbn }}
+
+    runs-on: ubuntu-latest # Ubuntu 環境で実行
+
+    strategy:
+      fail-fast: false # ジョブの失敗によらず、すべてのジョブが完了するまで実行する
+
+      matrix:
+        board: # ボード群
+          - fqbn: arduino:avr:nano
+            platform: arduino:avr
+          - fqbn: arduino:avr:uno
+            platform: arduino:avr
+          - fqbn: teensy:avr:teensy35
+            platform: teensy:avr
+            url: https://www.pjrc.com/teensy/td_156/package_teensy_index.json # URL からインストールも可
+          - fqbn: teensy:avr:teensy40
+            platform: teensy:avr
+            url: https://www.pjrc.com/teensy/td_156/package_teensy_index.json
+          - fqbn: rp2040:rp2040:rpipico
+            platform: rp2040:rp2040
+            url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+          - fqbn: rp2040:rp2040:rpipicow
+            platform: rp2040:rp2040
+            url: https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Arduino CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          echo "./bin" >> $GITHUB_PATH          
+
+      - name: Install board
+        run: |
+          arduino-cli config init
+          arduino-cli config set library.enable_unsafe_install true
+          if [ -n "${{ matrix.board.url }}" ]; then
+            arduino-cli config add board_manager.additional_urls ${{ matrix.board.url }}
+          fi
+          arduino-cli core update-index
+          arduino-cli core install ${{ matrix.board.platform }}          
+
+      # 依存しているライブラリがある場合 (publicレポジトリのみ)
+      # - name: Install libraries
+      #   run: |
+      #     arduino-cli lib install --git-url https://github.com/adafruit/Adafruit_BusIO.git
+      #     arduino-cli lib install --git-url https://github.com/adafruit/Adafruit_Sensor.git
+      #     arduino-cli lib install --git-url https://github.com/adafruit/Adafruit_BNO055.git
+
+      - name: Run test
+        run: arduino-cli compile --library . -b ${{ matrix.board.fqbn }} ./test/ArduinoLint/ArduinoLint.ino
