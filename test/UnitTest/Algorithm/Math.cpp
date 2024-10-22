@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <MyLIbrary/Algorithm/Math.hpp>
+#include <MyLibrary/Algorithm/Math.hpp>
 
 TEST(Factorial, HandlesPositiveInput)
 {
