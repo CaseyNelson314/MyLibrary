@@ -1,0 +1,5 @@
+if(EXISTS "C:/Users/casey/Documents/Arduino/libraries/MyLibrary/test/UnitTest/Build/Algorithm/AlgorithmTest[1]_tests.cmake")
+  include("C:/Users/casey/Documents/Arduino/libraries/MyLibrary/test/UnitTest/Build/Algorithm/AlgorithmTest[1]_tests.cmake")
+else()
+  add_test(AlgorithmTest_NOT_BUILT AlgorithmTest_NOT_BUILT)
+endif()

@@ -1,0 +1,2 @@
+Factorial.HandlesPositiveInput 1 0.016756
+---
